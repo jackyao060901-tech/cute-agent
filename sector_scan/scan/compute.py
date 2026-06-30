@@ -26,7 +26,7 @@ class ConcentrationTiers:
     def as_rows(self) -> list[tuple[str, float]]:
         """给渲染层用的分档明细(顺序固定)。"""
         return [
-            (f"拥挤核心 (Top{self.core_n}: {'/'.join(self.core_tickers)})", self.core_pct),
+            (f"核心持仓 (Top{self.core_n}: {'/'.join(self.core_tickers)})", self.core_pct),
             (f"其他前{self.top_n}大", self.other_top_pct),
             (f"其余股票 (第{self.top_n+1}名起)", self.other_equity_pct),
             ("现金及等价物", self.cash_pct),

@@ -20,7 +20,7 @@
 ## ③ 持仓集中度 (Holdings Concentration)
 | 分档 | 占比 |
 |---|---|
-| 拥挤核心 (Top5: NVDA/AMD/MU/AVGO/AMAT) | 35.57% |
+| 核心持仓 (Top5: NVDA/AMD/MU/AVGO/AMAT) | 35.57% |
 | 其他前10大 | 20.77% |
 | 其余股票 (第11名起) | 43.53% |
 | 现金及等价物 | 2.14% |

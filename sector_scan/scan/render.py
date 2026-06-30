@@ -141,7 +141,7 @@ def render_dashboard(s: ScanResult, interp=None) -> str:
              "13F 为延迟披露的季度末仓位;ETF 持仓为监管快照,可能与当前实际持仓不同。")
     if interp:
         L.append("")
-        L.append("> 注:标 🧠 的为 DeepSeek 大脑生成的**定性解读**(不含数字、不参与计算),"
+        L.append("> 注:标 🧠 的为 DeepSeek 大脑生成的**定性解读**;该区块不含阿拉伯数字、不参与计算,"
                  "与上方确定性事实/数据分区呈现。所有数字均来自接口的确定性计算。")
     L.append("")
 
