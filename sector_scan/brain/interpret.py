@@ -17,14 +17,22 @@ from ..scan.scan import ScanResult
 
 _DIGIT = re.compile(r"\d")
 
+# 违禁词护栏:超出"主要持有人/集中度"事实所能支撑的措辞,出现即判违规
+BANNED_PHRASES = ("主导", "重仓", "控制", "控盘", "操纵", "龙头地位", "收益强劲", "涨幅领先")
+
 SYSTEM = (
-    "你是严谨的量化研究助理,为券商撰写半导体 ETF 的板块解读。"
-    "铁律:(1) 只能基于用户提供的事实写解读,绝不编造或引入任何新数据/新标的;"
-    "(2) **你的全部输出严禁出现任何阿拉伯数字 0-9**——所有数字已在报告表格里,"
-    "你只用文字描述程度与含义(如'高度集中''机构覆盖最广''拥挤度居前');"
-    "(3) 用简洁专业的中文;(4) 不做买卖建议。"
-    "只输出 JSON,字段:one_line(一句话定性判断)、crowding_note(集中度与拥挤度的一句话解读)、"
-    "quick_reads(对象:键为 ticker,值为该股一句话定性快读)。"
+    "你是严谨的量化研究助理,为券商撰写半导体 ETF 的板块解读。审计友好、克制、可被表格逐句支撑。"
+    "铁律:"
+    "(1) 只能基于用户提供的事实写解读,绝不编造或引入任何新数据/新标的;"
+    "(2) **全部输出严禁出现任何阿拉伯数字 0-9**——所有数字已在报告表格里,你只用文字描述程度"
+    "(如'高度集中''机构覆盖最广');"
+    "(3) **只做事实翻译,不做额外推断**,尤其:"
+    "  · 不得对单只成分股的收益/涨跌下判断——报告只有 ETF 整体价格窗口收益,没有逐只个股收益;"
+    "  · 'top holders/主要机构'仅表示按 13F 持仓市值最大的机构,**不得**说成'重仓''主导''控制';"
+    "    应写'主要持有人包括…'或'位列主要持有人';"
+    "  · 涉及拥挤度/机构覆盖度的比较须限定'在本页所示样本内',不得暗示全市场排名;"
+    "(4) 简洁专业的中文;不做买卖建议。"
+    "只输出 JSON,字段:one_line、crowding_note、quick_reads(键=ticker,值=该股一句话定性快读)。"
 )
 
 
@@ -34,9 +42,15 @@ class Interpretation:
     crowding_note: str
     quick_reads: dict[str, str]
 
+    def _all_texts(self) -> list[str]:
+        return [self.one_line, self.crowding_note, *self.quick_reads.values()]
+
     def has_any_digit(self) -> bool:
-        texts = [self.one_line, self.crowding_note, *self.quick_reads.values()]
-        return any(_DIGIT.search(t or "") for t in texts)
+        return any(_DIGIT.search(t or "") for t in self._all_texts())
+
+    def banned_phrases_found(self) -> list[str]:
+        joined = " ".join(self._all_texts())
+        return [w for w in BANNED_PHRASES if w in joined]
 
 
 def _facts_text(s: ScanResult) -> str:
@@ -58,7 +72,7 @@ def _facts_text(s: ScanResult) -> str:
     return "\n".join(lines)
 
 
-def interpret(s: ScanResult, *, model: str = "deepseek-v4-pro", max_retries: int = 1) -> Interpretation | None:
+def interpret(s: ScanResult, *, model: str = "deepseek-v4-pro", max_retries: int = 2) -> Interpretation | None:
     """调用大脑生成解读;失败或违规则返回 None(降级,事实层不受影响)。"""
     user = _facts_text(s)
     for attempt in range(max_retries + 1):
@@ -75,8 +89,15 @@ def interpret(s: ScanResult, *, model: str = "deepseek-v4-pro", max_retries: int
             )
         except (DeepSeekError, json.JSONDecodeError, AttributeError):
             continue
-        if not interp.has_any_digit():   # 护栏:输出含数字即判违规
+        digit_bad = interp.has_any_digit()
+        banned = interp.banned_phrases_found()
+        if not digit_bad and not banned:   # 双护栏:数字 + 违禁词
             return interp
-        # 含数字 -> 追加更强约束重试
-        user += "\n严重警告:上次输出含阿拉伯数字,违规。请重写,绝对不要出现任何 0-9。"
+        # 违规 -> 追加更强约束重试
+        warn = "\n严重警告:上次输出违规,请重写。"
+        if digit_bad:
+            warn += "不得出现任何阿拉伯数字 0-9。"
+        if banned:
+            warn += f"不得使用这些词:{'、'.join(banned)};改用'主要持有人包括…',且不要对单只个股收益下判断。"
+        user += warn
     return None

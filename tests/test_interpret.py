@@ -25,18 +25,26 @@ def test_digit_guard_passes_clean():
     assert good.has_any_digit() is False
 
 
-def test_saved_interpretation_has_no_digits():
-    """已存的真实大脑输出必须零阿拉伯数字(防止回归引入数字幻觉)。"""
+def test_banned_phrase_guard():
+    bad = Interpretation("贝莱德主导该股", "ok", {"NVDA": "机构重仓"})
+    assert set(bad.banned_phrases_found()) >= {"主导", "重仓"}
+    good = Interpretation("机构覆盖广泛", "主要持有人包括三大资管", {"NVDA": "权重最高"})
+    assert good.banned_phrases_found() == []
+
+
+def test_saved_interpretation_clean():
+    """已存的真实大脑输出必须零阿拉伯数字、零违禁词(防回归引入越界措辞)。"""
     d = json.load(open(FIXTURE, encoding="utf-8"))
     interp = Interpretation(d["one_line"], d["crowding_note"], d["quick_reads"])
     assert not interp.has_any_digit(), "存档解读含阿拉伯数字,违反护栏"
+    assert interp.banned_phrases_found() == [], f"存档解读含违禁词: {interp.banned_phrases_found()}"
     assert interp.one_line and interp.crowding_note and interp.quick_reads
 
 
 if __name__ == "__main__":
     ok = True
     for fn in [test_digit_guard_detects_digit, test_digit_guard_passes_clean,
-               test_saved_interpretation_has_no_digits]:
+               test_banned_phrase_guard, test_saved_interpretation_clean]:
         try:
             fn(); print(f"  ✓ {fn.__name__}")
         except AssertionError as e:
