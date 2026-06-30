@@ -27,20 +27,27 @@ def _usd(v: float | None) -> str:
     return "—" if v is None else f"${v:,.0f}"
 
 
-def render_dashboard(s: ScanResult) -> str:
+def render_dashboard(s: ScanResult, interp=None) -> str:
+    """渲染 8 模块中文 dashboard。
+
+    interp(可选):DeepSeek 解读对象(one_line/crowding_note/quick_reads)。
+    解读全部放进「🧠 解读」标注块,与事实视觉隔离;为 None 时退化为纯事实版。
+    """
     c = s.concentration
     L: list[str] = []
 
     L.append(f"# Sector Smart Money Scan — {s.etf}")
     L.append("")
 
-    # ① 一句话速览(事实版;解读见大脑层)
+    # ① 一句话速览(事实版;解读单列)
     L.append("## ① 一句话速览")
     L.append(
         f"**{s.etf}**({s.fund_name})前 {c.top_n} 大持仓占 **{c.top_n_pct:.1f}%**,"
         f"其中核心 {c.core_n} 只({'/'.join(c.core_tickers)})占 **{c.core_pct:.1f}%**;"
         f"过去 90 天 **{s.price.total_return_pct:+.1f}%**。"
     )
+    if interp and interp.one_line:
+        L.append(f"> 🧠 **解读**:{interp.one_line}")
     L.append("")
 
     # ② 板块快照
@@ -66,6 +73,9 @@ def render_dashboard(s: ScanResult) -> str:
     for label, pct in c.as_rows():
         L.append(f"| {label} | {pct:.2f}% |")
     L.append(f"| **合计** | **{c.total_pct:.2f}%** |")
+    if interp and interp.crowding_note:
+        L.append("")
+        L.append(f"> 🧠 **解读**:{interp.crowding_note}")
     L.append("")
 
     # ④ 成分股 × 聪明钱矩阵
@@ -79,6 +89,13 @@ def render_dashboard(s: ScanResult) -> str:
             f"{_agg(r.aggregate_value_usd)} | {', '.join(r.top_holders) or '—'} |"
         )
     L.append("")
+    if interp and interp.quick_reads:
+        L.append("**🧠 成分股快读(DeepSeek 解读,非数据):**")
+        for r in s.matrix:
+            qr = interp.quick_reads.get(r.ticker)
+            if qr:
+                L.append(f"- **{r.ticker}** — {qr}")
+        L.append("")
 
     # ⑤ 重复暴露检查
     L.append("## ⑤ 重复暴露检查 (Duplicate Exposure Check)")
@@ -122,6 +139,10 @@ def render_dashboard(s: ScanResult) -> str:
     L.append("## ⑧ 风险披露 (Risk Disclosure)")
     L.append("本页为信息研究用途,基于公开监管数据的确定性聚合,**不构成投资建议**。"
              "13F 为延迟披露的季度末仓位;ETF 持仓为监管快照,可能与当前实际持仓不同。")
+    if interp:
+        L.append("")
+        L.append("> 注:标 🧠 的为 DeepSeek 大脑生成的**定性解读**(不含数字、不参与计算),"
+                 "与上方确定性事实/数据分区呈现。所有数字均来自接口的确定性计算。")
     L.append("")
 
     return "\n".join(L)
