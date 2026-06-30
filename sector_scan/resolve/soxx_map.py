@@ -33,7 +33,7 @@ SOXX_ISIN_MAP: dict[str, tuple[str | None, str]] = {
     "US8740391003": ("TSM", "equity"),    # Taiwan Semiconductor ADR — NYSE:TSM
     "US6098391054": ("MPWR", "equity"),   # Monolithic Power Systems — NASDAQ:MPWR
     "US5738741041": ("MRVL", "equity"),   # Marvell Technology — NASDAQ:MRVL
-    "USN070592100": ("ASML", "equity"),   # ASML Holding NV — NASDAQ:ASML(美股上市线)
+    "USN070592100": ("ASML", "equity"),   # ASML Holding NV — NASDAQ:ASML(NASDAQ registered shares / NYRS,非 ADR)
     "US4581401001": ("INTC", "equity"),   # Intel Corp. — NASDAQ:INTC
     "US5950171042": ("MCHP", "equity"),   # Microchip Technology — NASDAQ:MCHP
     "US8807701029": ("TER", "equity"),    # Teradyne — NASDAQ:TER
@@ -47,7 +47,7 @@ SOXX_ISIN_MAP: dict[str, tuple[str | None, str]] = {
     "US83088M1027": ("SWKS", "equity"),   # Skyworks Solutions — NASDAQ:SWKS
     "US00215W1009": ("ASX", "equity"),    # ASE Technology ADR — NYSE:ASX
     "US9108734057": ("UMC", "equity"),    # United Microelectronics ADR — NYSE:UMC
-    "US8610121027": ("STM", "equity"),    # STMicroelectronics ADR — NYSE:STM
+    "US8610121027": ("STM", "equity"),    # STMicroelectronics NV — NYSE:STM(NYSE registered shares / NYRS,非 ADR)
     "US0420682058": ("ARM", "equity"),    # ARM Holdings ADR — NASDAQ:ARM
     # 现金 / 货币基金(BlackRock Funds III = 贝莱德现金管理货基),不查 13F:
     "US0669225197": (None, "cash"),       # BlackRock Funds III(现金扫存)

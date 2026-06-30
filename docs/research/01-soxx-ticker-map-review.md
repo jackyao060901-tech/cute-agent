@@ -1,7 +1,8 @@
-# SOXX 标的映射复核清单 (v1 — 待 jack / 其他模型复核)
+# SOXX 标的映射复核清单 (v1.1 — 已通过 jack + 外部模型复核)
 
 > 由 `sector_scan/resolve/soxx_map.py` + 真实 N-PORT 快照(2025-12-31)程序化生成,非手抄。
-> 复核重点:**ticker 是否正确**。逐条核对依据见末列。
+> ✅ 复核结论:30 条 ticker 全部正确,无需重映射。
+> 口径修正:ASML = NASDAQ NYRS(非 ADR);STM = NYSE NYRS(非 ADR)。
 
 ## 一、股票映射(30 条,参与 13F 的 Top10 标 ★)
 
@@ -21,7 +22,7 @@
 | 12 | Taiwan Semiconductor Manufacturing Co. Ltd. | US8740391003 | 874039100 | 3.844% | **TSM** | Taiwan Semiconductor ADR — NYSE:TSM |
 | 13 | Monolithic Power Systems, Inc. | US6098391054 | 609839105 | 3.829% | **MPWR** | Monolithic Power Systems — NASDAQ:MPWR |
 | 14 | Marvell Technology, Inc. | US5738741041 | 573874104 | 3.727% | **MRVL** | Marvell Technology — NASDAQ:MRVL |
-| 15 | ASML Holding NV | USN070592100 | — | 3.722% | **ASML** | ASML Holding NV — NASDAQ:ASML(美股上市线) |
+| 15 | ASML Holding NV | USN070592100 | — | 3.722% | **ASML** | ASML Holding NV — NASDAQ:ASML(NASDAQ registered shares / NYRS,非 ADR) |
 | 16 | Intel Corp. | US4581401001 | 458140100 | 3.562% | **INTC** | Intel Corp. — NASDAQ:INTC |
 | 17 | Microchip Technology, Inc. | US5950171042 | 595017104 | 3.386% | **MCHP** | Microchip Technology — NASDAQ:MCHP |
 | 18 | Teradyne, Inc. | US8807701029 | 880770102 | 3.038% | **TER** | Teradyne — NASDAQ:TER |
@@ -35,34 +36,22 @@
 | 26 | Skyworks Solutions, Inc. | US83088M1027 | 83088M102 | 0.942% | **SWKS** | Skyworks Solutions — NASDAQ:SWKS |
 | 27 | ASE Technology Holding Co. Ltd. | US00215W1009 | 00215W100 | 0.861% | **ASX** | ASE Technology ADR — NYSE:ASX |
 | 28 | United Microelectronics Corp. | US9108734057 | 910873405 | 0.585% | **UMC** | United Microelectronics ADR — NYSE:UMC |
-| 29 | STMicroelectronics NV | US8610121027 | 861012102 | 0.547% | **STM** | STMicroelectronics ADR — NYSE:STM |
+| 29 | STMicroelectronics NV | US8610121027 | 861012102 | 0.547% | **STM** | STMicroelectronics NV — NYSE:STM(NYSE registered shares / NYRS,非 ADR) |
 | 30 | ARM Holdings plc | US0420682058 | 042068205 | 0.473% | **ARM** | ARM Holdings ADR — NASDAQ:ARM |
 
 ## 二、现金 / 货基(3 条,不查 13F)
 
-| 名称 | ISIN | 权重 | 分类 |
-|------|------|------|------|
-| BlackRock Funds III | US0669225197 | 2.031% | 现金货基(CASH) |
-| BlackRock Funds III | US0669224778 | 0.104% | 现金货基(CASH) |
-| BlackRock Funds III | US0669225197 | 0.000% | 现金货基(CASH) |
+| 名称 | ISIN | 权重 |
+|------|------|------|
+| BlackRock Funds III | US0669225197 | 2.031% |
+| BlackRock Funds III | US0669224778 | 0.104% |
+| BlackRock Funds III | US0669225197 | 0.000% |
 
 ## 三、剔除(占位行)
 
 - `N/A`(无标识符,权重 -0.000%)→ EXCLUDED
 
-## 四、请重点复核(非美国本土注册 / ADR,最易错)
+## 四、汇总
 
-- **NXPI** ← NXP Semiconductors NV  (`NL0009538784`)
-- **TSM** ← Taiwan Semiconductor Manufacturing Co. Ltd.  (`US8740391003`)
-- **ASML** ← ASML Holding NV  (`USN070592100`)
-- **CRDO** ← Credo Technology Group Holding Ltd.  (`KYG254571055`)
-- **NVMI** ← Nova Ltd.  (`IL0010845571`)
-- **ASX** ← ASE Technology Holding Co. Ltd.  (`US00215W1009`)
-- **UMC** ← United Microelectronics Corp.  (`US9108734057`)
-- **STM** ← STMicroelectronics NV  (`US8610121027`)
-- **ARM** ← ARM Holdings plc  (`US0420682058`)
-
-## 五、汇总
-
-- 股票 30 个 / 现金 3 行 / 剔除 1 行 / 未解析 0 行
-- 股票仓权重合计 99.88% | 现金 2.14% | 总计 102.01%
+- 股票 30 / 现金 3 / 剔除 1 / 未解析 0
+- 股票仓 99.88% | 现金 2.14% | 总计 102.01%
