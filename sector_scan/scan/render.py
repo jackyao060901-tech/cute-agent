@@ -113,7 +113,8 @@ def render_dashboard(s: ScanResult) -> str:
     L.append(f"- 权重合计 {c.total_pct:.2f}%(含现金/货基 {c.cash_pct:.2f}%),现金已单列,未混入股票集中度。")
     L.append(f"- 13F「持有者数」口径:SEC Form 13F **Top 1000 机构内**的持有者数量(非全市场),"
              f"ranking_period={s.thirteen_f_period}。")
-    L.append("- 「合计 13F 市值」为申报时点 as-reported 市值,与第三方按更晚价格重估的数字可能有数个百分点差异。")
+    L.append("- 「合计 13F 市值」为申报时点 as-reported 全量市值;与第三方公布值可能有约 0.9–6.7% 差异"
+             "(**假设**:或因估值基准不同,如更晚的市价重估)。我方不为对齐而改写接口值。")
     L.append("- 成分股 ticker 由人工核对映射表解析(已通过外部模型复核),解析不上者标红、绝不臆测。")
     L.append("")
 
