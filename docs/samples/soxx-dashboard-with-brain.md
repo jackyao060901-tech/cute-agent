@@ -2,7 +2,7 @@
 
 ## ① 一句话速览
 **SOXX**(iShares Semiconductor ETF)前 10 大持仓占 **56.3%**,其中核心 5 只(NVDA/AMD/MU/AVGO/AMAT)占 **35.6%**;过去 90 天 **+78.2%**。
-> 🧠 **解读**:iShares半导体ETF，持仓高度集中，过去窗口价格显著上涨。
+> 🧠 **解读**:iShares半导体ETF，前十大持股高度集中，核心仓覆盖英伟达、AMD、美光、博通、应用材料，过去窗口收益显著。
 
 ## ② 板块快照 (Sector Snapshot)
 | 字段 | 值 |
@@ -27,7 +27,7 @@
 | 现金及等价物 | 2.14% |
 | **合计** | **102.01%** |
 
-> 🧠 **解读**:前十大成分股权重合计超出半数，其中五只核心股占比尤为突出。若投资者已在组合中持有NVDA等权重较大的标的，通过本ETF可能进一步增加对该股的间接暴露。多数成分股在本页所示样本内机构覆盖广泛，主要持有人为大型资产管理机构。
+> 🧠 **解读**:在本页所示样本内，前十大成分股集中度较高，其中英伟达与博通的机构持有者数量最为突出，而恩智浦的机构覆盖相对较少。
 
 ## ④ 成分股 × 聪明钱矩阵 (Top 10)
 | # | Ticker | 名称 | 权重 | 13F持有者数 | 合计13F市值 | 主要机构 |
@@ -44,16 +44,16 @@
 | 10 | ADI | Analog Devices, Inc. | 4.01% | 590 | $88.56B | VANGUARD GROUP INC, STATE STREET CORP, BlackRock, Inc. |
 
 **🧠 成分股快读(DeepSeek 解读,非数据):**
-- **NVDA** — 权重位居首位，在本样本中机构覆盖数量最多，主要持有人包括Vanguard、State Street、BlackRock。
-- **AMD** — 权重较高，机构覆盖广泛，位列样本前茅，主要持有人包括Vanguard、State Street、BlackRock。
-- **MU** — 权重靠前，机构覆盖数量较多，主要持有人除Vanguard、State Street外还包括Capital World Investors。
-- **AVGO** — 权重显著，机构覆盖数量仅次于NVDA，主要持有人包括Vanguard、State Street、BlackRock。
-- **AMAT** — 权重居前，机构覆盖广泛，主要持有人含Vanguard、State Street和Capital Research Global Investors。
-- **NXPI** — 权重中等，机构覆盖数量在本样本中相对较少，主要持有人包括FMR、摩根大通和Vanguard。
-- **LRCX** — 权重略低于前五，机构覆盖较广，主要持有人为Vanguard、State Street、BlackRock。
-- **KLAC** — 权重与LRCX相近，机构覆盖数量相对适中，主要持有人含Vanguard、State Street和Capital International Investors。
-- **TXN** — 权重接近ADI，机构覆盖数量与MU相近，主要持有人为Vanguard、State Street、BlackRock。
-- **ADI** — 权重与TXN相当，机构覆盖略低于TXN，主要持有人同为Vanguard、State Street、BlackRock。
+- **NVDA** — 权重领先，机构覆盖在本样本中最广。
+- **AMD** — 权重居前，机构覆盖广泛。
+- **MU** — 权重较高，机构持有者数量较多。
+- **AVGO** — 权重较高，机构覆盖与英伟达并列最广。
+- **AMAT** — 权重靠前，机构覆盖处于样本中上游。
+- **NXPI** — 权重中等，机构覆盖在十大成分股中相对靠后。
+- **LRCX** — 权重中等，机构持有者数量较多。
+- **KLAC** — 权重中等，机构覆盖处于中等水平。
+- **TXN** — 权重中等，机构持有者数量较多。
+- **ADI** — 权重中等，机构覆盖处于中等水平。
 
 ## ⑤ 重复暴露检查 (Duplicate Exposure Check)
 已持有 **NVDA** 时,再买 SOXX:NVDA 在 SOXX 中权重 **8.26%**。每投入 $100,000,间接增加 NVDA 暴露 **$8,263**。
