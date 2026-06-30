@@ -54,3 +54,36 @@ def etf_lookup(ticker: str, as_of: str | None = None) -> dict[str, Any]:
     """ETF 身份 / AUM / 概要。返回 data 字段。"""
     payload = _get("/api/etf/lookup", {"ticker": ticker, "as_of": as_of})
     return payload.get("data", {})
+
+
+def sec_13f_list_ticker_holders(
+    ticker: str,
+    year: int | None = None,
+    quarter: int | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """某只股票的 13F 机构持有者(反向 13F)。返回 data 字段。
+
+    关键字段:total_holders_in_scope(Top1000 机构内的持有者数量)、
+    aggregate_value_usd(合计持仓市值)、holders[](按市值降序,含 manager_name)。
+    成本:1 credit/次。年/季省略 = 最新季度。
+    """
+    payload = _get(
+        "/api/filings/13f/by-ticker",
+        {"ticker": ticker, "year": year, "quarter": quarter, "limit": limit},
+    )
+    return payload.get("data", {})
+
+
+def equity_historical_prices(
+    ticker: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    """美股日线 OHLCV(含 adjusted_close)。返回 data 字段。成本:0 credits。"""
+    payload = _get(
+        "/api/equity/historical",
+        {"ticker": ticker, "start_date": start_date, "end_date": end_date, "limit": limit},
+    )
+    return payload.get("data", {})
