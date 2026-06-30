@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# 密钥 / 本地配置(仓库转 private 后再决定是否纳入)
+.env
+*.local
+
+# 编辑器 / 系统
+.DS_Store
+.idea/
+.vscode/
