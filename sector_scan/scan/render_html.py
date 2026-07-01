@@ -60,41 +60,60 @@ def render_html(s: ScanResult, interp=None) -> str:
     P.append(f"<div class='sub'>{_e(s.fund_name)} · 持仓 as-of {_e(s.holdings_as_of)} · "
              f"来源 {_e(s.holdings_source)} · 覆盖 {_e(s.coverage_status)}</div>")
 
+    covered = s.equity_count > 0
+    if not covered:
+        P.append(f"<div class='brain' style='border-left-color:#b45309;background:#fff7ed'>"
+                 f"<span class='tag' style='color:#b45309'>⚠️ 覆盖提示</span> "
+                 f"{_e(s.etf)} 的成分股均未被当前映射表解析,「持仓集中度」与「成分股矩阵」不适用;"
+                 f"仅呈现 ETF 概要与价格窗口。当前映射覆盖 SOXX,其他 ETF 待接 OpenFIGI。</div>")
+
     # ① KPI + 速览
     P.append("<h2>① 一句话速览</h2>")
     P.append("<div class='kpis'>")
-    P.append(f"<div class='kpi'><div class='v'>{c.top_n_pct:.1f}%</div><div class='l'>前{c.top_n}大集中度</div></div>")
-    P.append(f"<div class='kpi'><div class='v'>{c.core_pct:.1f}%</div><div class='l'>核心{c.core_n}只</div></div>")
+    if covered:
+        P.append(f"<div class='kpi'><div class='v'>{c.top_n_pct:.1f}%</div><div class='l'>前{c.top_n}大集中度</div></div>")
+        P.append(f"<div class='kpi'><div class='v'>{c.core_pct:.1f}%</div><div class='l'>核心{c.core_n}只</div></div>")
     P.append(f"<div class='kpi'><div class='v'>{s.price.total_return_pct:+.1f}%</div><div class='l'>窗口收益</div></div>")
     P.append(f"<div class='kpi'><div class='v'>{_money_b(s.aum)}</div><div class='l'>AUM</div></div>")
     P.append("</div>")
-    P.append(f"<div class='note'>{_e(s.etf)} 前 {c.top_n} 大占 {c.top_n_pct:.1f}%,核心 {c.core_n} 只"
-             f"({_e('/'.join(c.core_tickers))})占 {c.core_pct:.1f}%。</div>")
+    if covered:
+        P.append(f"<div class='note'>{_e(s.etf)} 前 {c.top_n} 大占 {c.top_n_pct:.1f}%,核心 {c.core_n} 只"
+                 f"({_e('/'.join(c.core_tickers))})占 {c.core_pct:.1f}%。</div>")
+    else:
+        P.append(f"<div class='note'>{_e(s.etf)}({_e(s.fund_name)})窗口收益 {s.price.total_return_pct:+.1f}%;"
+                 f"成分股解析未覆盖,集中度/机构矩阵暂不可用。</div>")
     if interp and interp.one_line:
         P.append(f"<div class='brain'><span class='tag'>🧠 解读</span> {_e(interp.one_line)}</div>")
 
     # ③ 集中度(带条形)
-    P.append("<h2>③ 持仓集中度</h2><table><tr><th>分档</th><th class='num'>占比</th><th>占比条</th></tr>")
-    for label, pct in c.as_rows():
-        w = max(0.0, min(100.0, pct))
-        P.append(f"<tr><td>{_e(label)}</td><td class='num'>{pct:.2f}%</td>"
-                 f"<td><span class='bar' style='width:{w*3:.0f}px'></span></td></tr>")
-    P.append(f"<tr><th>合计</th><th class='num'>{c.total_pct:.2f}%</th><th></th></tr></table>")
-    if interp and interp.crowding_note:
-        P.append(f"<div class='brain'><span class='tag'>🧠 解读</span> {_e(interp.crowding_note)}</div>")
+    P.append("<h2>③ 持仓集中度</h2>")
+    if covered:
+        P.append("<table><tr><th>分档</th><th class='num'>占比</th><th>占比条</th></tr>")
+        for label, pct in c.as_rows():
+            w = max(0.0, min(100.0, pct))
+            P.append(f"<tr><td>{_e(label)}</td><td class='num'>{pct:.2f}%</td>"
+                     f"<td><span class='bar' style='width:{w*3:.0f}px'></span></td></tr>")
+        P.append(f"<tr><th>合计</th><th class='num'>{c.total_pct:.2f}%</th><th></th></tr></table>")
+        if interp and interp.crowding_note:
+            P.append(f"<div class='brain'><span class='tag'>🧠 解读</span> {_e(interp.crowding_note)}</div>")
+    else:
+        P.append("<p class='note'>不适用:无已解析股票(见数据质量说明)。</p>")
 
     # ④ 矩阵(带 holder 覆盖条)
     P.append(f"<h2>④ 成分股 × 聪明钱矩阵 (Top {s.top_n})</h2>")
-    P.append("<table><tr><th>#</th><th>Ticker</th><th>名称</th><th class='num'>权重</th>"
-             "<th class='num'>13F持有者</th><th>覆盖度</th><th class='num'>合计13F市值</th><th>主要机构</th></tr>")
-    maxhc = max((r.holder_count or 0) for r in s.matrix) or 1
-    for r in s.matrix:
-        hc = r.holder_count or 0
-        P.append(f"<tr><td>{r.rank}</td><td>{_e(r.ticker)}</td><td>{_e(r.name)}</td>"
-                 f"<td class='num'>{r.weight_pct:.2f}%</td><td class='num'>{_e(r.holder_count)}</td>"
-                 f"<td><span class='bar' style='width:{hc/maxhc*90:.0f}px'></span></td>"
-                 f"<td class='num'>{_agg(r.aggregate_value_usd)}</td><td>{_e(', '.join(r.top_holders))}</td></tr>")
-    P.append("</table>")
+    if s.matrix:
+        P.append("<table><tr><th>#</th><th>Ticker</th><th>名称</th><th class='num'>权重</th>"
+                 "<th class='num'>13F持有者</th><th>覆盖度</th><th class='num'>合计13F市值</th><th>主要机构</th></tr>")
+        maxhc = max((r.holder_count or 0) for r in s.matrix) or 1
+        for r in s.matrix:
+            hc = r.holder_count or 0
+            P.append(f"<tr><td>{r.rank}</td><td>{_e(r.ticker)}</td><td>{_e(r.name)}</td>"
+                     f"<td class='num'>{r.weight_pct:.2f}%</td><td class='num'>{_e(r.holder_count)}</td>"
+                     f"<td><span class='bar' style='width:{hc/maxhc*90:.0f}px'></span></td>"
+                     f"<td class='num'>{_agg(r.aggregate_value_usd)}</td><td>{_e(', '.join(r.top_holders))}</td></tr>")
+        P.append("</table>")
+    else:
+        P.append("<p class='note'>不适用:无已解析股票,无法生成机构矩阵(见数据质量说明)。</p>")
     if interp and interp.quick_reads:
         P.append("<div class='brain'><span class='tag'>🧠 成分股快读</span><ul>")
         for r in s.matrix:

@@ -41,11 +41,36 @@ def test_resolution_disclosed():
     assert "30 只股票已解析" in md and "0 只未解析" in md
 
 
+def _not_covered_scan():
+    """构造一个成分股全部未解析的 ETF(离线,不花额度)。"""
+    from sector_scan.scan.scan import build_scan
+    holdings = {"ticker": "XTEST", "fund_name": "Test Fund", "as_of_date": "2025-12-31",
+                "source": "sec_nport", "coverage_status": "stale",
+                "holdings": [{"holding_name": "Foo Corp", "isin": "US000000FOO0", "cusip": None,
+                              "weight": 0.6, "market_value": 6},
+                             {"holding_name": "Bar Inc", "isin": "US000000BAR0", "cusip": None,
+                              "weight": 0.4, "market_value": 4}]}
+    lookup = {"fund_name": "Test Fund", "aum": 1e9}
+    prices = {"prices": [{"time": "2026-03-23", "close": 100, "adjusted_close": 100},
+                         {"time": "2026-06-17", "close": 110, "adjusted_close": 110}]}
+    return build_scan(holdings, lookup, {}, prices, dup_ticker=None)
+
+
+def test_not_covered_graceful():
+    """0 只解析时:醒目覆盖提示 + 集中度标'不适用',不把 0.0% 当事实。"""
+    from sector_scan.scan.render import render_dashboard
+    s = _not_covered_scan()
+    assert s.equity_count == 0 and s.unresolved_count == 2
+    md = render_dashboard(s)
+    assert "覆盖提示" in md and "不适用" in md
+    assert "占 **0.0%**" not in md  # 不得出现误导性 0.0% 集中度断言
+
+
 if __name__ == "__main__":
     md = _md()
     ok = True
     for fn in [test_eight_modules_present, test_key_facts_present, test_no_unresolved_leak,
-               test_resolution_disclosed]:
+               test_resolution_disclosed, test_not_covered_graceful]:
         try:
             fn(); print(f"  ✓ {fn.__name__}")
         except AssertionError as e:

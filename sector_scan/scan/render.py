@@ -41,11 +41,20 @@ def render_dashboard(s: ScanResult, interp=None) -> str:
 
     # ① 一句话速览(事实版;解读单列)
     L.append("## ① 一句话速览")
-    L.append(
-        f"**{s.etf}**({s.fund_name})前 {c.top_n} 大持仓占 **{c.top_n_pct:.1f}%**,"
-        f"其中核心 {c.core_n} 只({'/'.join(c.core_tickers)})占 **{c.core_pct:.1f}%**;"
-        f"过去 90 天 **{s.price.total_return_pct:+.1f}%**。"
-    )
+    covered = s.equity_count > 0
+    if not covered:
+        L.append(f"> ⚠️ **覆盖提示:{s.etf} 的成分股均未被当前映射表解析,本页「持仓集中度」与"
+                 f"「成分股×聪明钱矩阵」不适用**;仅呈现 ETF 概要与价格窗口。未解析清单见数据质量说明。"
+                 f"(当前映射表覆盖 SOXX;其他 ETF 待接 OpenFIGI 泛化。)")
+        L.append("")
+        L.append(f"**{s.etf}**({s.fund_name})过去窗口 **{s.price.total_return_pct:+.1f}%**;"
+                 f"成分股解析未覆盖,集中度/机构矩阵暂不可用。")
+    else:
+        L.append(
+            f"**{s.etf}**({s.fund_name})前 {c.top_n} 大持仓占 **{c.top_n_pct:.1f}%**,"
+            f"其中核心 {c.core_n} 只({'/'.join(c.core_tickers)})占 **{c.core_pct:.1f}%**;"
+            f"过去 90 天 **{s.price.total_return_pct:+.1f}%**。"
+        )
     if interp and interp.one_line:
         L.append(f"> 🧠 **解读**:{interp.one_line}")
     L.append("")
@@ -61,33 +70,40 @@ def render_dashboard(s: ScanResult, interp=None) -> str:
     L.append(f"| 持仓来源 | {s.holdings_source or '—'} |")
     L.append(f"| 持仓日期 (as-of) | {s.holdings_as_of or '—'} |")
     L.append(f"| 覆盖状态 | {s.coverage_status or '—'} |")
-    L.append(f"| 持仓结构 | {s.equity_count} 股票 + {s.cash_count} 现金行 |")
-    L.append(f"| 前 {c.top_n} 大集中度 | {c.top_n_pct:.1f}% |")
+    L.append(f"| 持仓结构 | {s.equity_count} 股票 + {s.cash_count} 现金行"
+             f"{f' + {s.unresolved_count} 未解析' if s.unresolved_count else ''} |")
+    L.append(f"| 前 {c.top_n} 大集中度 | {f'{c.top_n_pct:.1f}%' if covered else '不适用'} |")
     L.append(f"| 90 天收益 | {s.price.total_return_pct:+.1f}% |")
     L.append("")
 
     # ③ 持仓集中度
     L.append("## ③ 持仓集中度 (Holdings Concentration)")
-    L.append("| 分档 | 占比 |")
-    L.append("|---|---|")
-    for label, pct in c.as_rows():
-        L.append(f"| {label} | {pct:.2f}% |")
-    L.append(f"| **合计** | **{c.total_pct:.2f}%** |")
-    if interp and interp.crowding_note:
-        L.append("")
-        L.append(f"> 🧠 **解读**:{interp.crowding_note}")
+    if covered:
+        L.append("| 分档 | 占比 |")
+        L.append("|---|---|")
+        for label, pct in c.as_rows():
+            L.append(f"| {label} | {pct:.2f}% |")
+        L.append(f"| **合计** | **{c.total_pct:.2f}%** |")
+        if interp and interp.crowding_note:
+            L.append("")
+            L.append(f"> 🧠 **解读**:{interp.crowding_note}")
+    else:
+        L.append("_不适用:无已解析股票(成分股未被映射表覆盖,见数据质量说明)。_")
     L.append("")
 
     # ④ 成分股 × 聪明钱矩阵
     L.append(f"## ④ 成分股 × 聪明钱矩阵 (Top {s.top_n})")
-    L.append("| # | Ticker | 名称 | 权重 | 13F持有者数 | 合计13F市值 | 主要机构 |")
-    L.append("|---|---|---|---|---|---|---|")
-    for r in s.matrix:
-        L.append(
-            f"| {r.rank} | {r.ticker} | {r.name} | {r.weight_pct:.2f}% | "
-            f"{r.holder_count if r.holder_count is not None else '—'} | "
-            f"{_agg(r.aggregate_value_usd)} | {', '.join(r.top_holders) or '—'} |"
-        )
+    if s.matrix:
+        L.append("| # | Ticker | 名称 | 权重 | 13F持有者数 | 合计13F市值 | 主要机构 |")
+        L.append("|---|---|---|---|---|---|---|")
+        for r in s.matrix:
+            L.append(
+                f"| {r.rank} | {r.ticker} | {r.name} | {r.weight_pct:.2f}% | "
+                f"{r.holder_count if r.holder_count is not None else '—'} | "
+                f"{_agg(r.aggregate_value_usd)} | {', '.join(r.top_holders) or '—'} |"
+            )
+    else:
+        L.append("_不适用:无已解析股票,无法生成机构矩阵(见数据质量说明)。_")
     L.append("")
     if interp and interp.quick_reads:
         L.append("**🧠 成分股快读(DeepSeek 解读,非数据):**")
