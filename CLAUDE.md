@@ -49,5 +49,15 @@
 7. ✅ 打包:CLI(python -m sector_scan)+ Claude Code skill(/sector-scan)
 8. ✅ 质量/合规:方法论 / 免责 / 对标 / HTML·PDF 导出
 
-> v1(SOXX)交付级完成。后续:接 OpenFIGI 泛化到任意 ETF;更多量化 skill。
+> v1(SOXX)交付级完成。当前节奏:**先复核 → 再实战 → 再升级**。
 > 详细调研见 `docs/research/00-preparation-dossier.md`;方法论见 `docs/methodology.md`。
+
+### ⭐ 升级北极星 (Upgrade North Star) —— 零边际成本
+- **痛点**:LLMQuant 是**付费 API**,长期按调用收费。券商合作方要的是能
+  **"零额外成本复制此功能" (replicate without additional cost)**。
+- **方向**:升级阶段优先用**免费公开数据源**替代/减少对付费 LLMQuant 的依赖:
+  - ETF 持仓 & 13F → **SEC EDGAR**(N-PORT / Form 13F 原始申报,公开免费)
+  - 价格 → 免费行情源
+  - 标的解析 → OpenFIGI(免费)
+- **架构已就位**:`data/` 层已抽象,换数据源只动这一层,上层计算/渲染/大脑不变。
+- **原则不变**:换源后仍须数字零 LLM 经手、口径透明、对账可复核。
