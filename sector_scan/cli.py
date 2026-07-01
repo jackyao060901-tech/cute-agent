@@ -24,7 +24,8 @@ def _default_window() -> tuple[str, str]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="sector_scan", description="Sector Smart Money Scan")
     ap.add_argument("etf", nargs="?", default="SOXX", help="行业 ETF 代码(默认 SOXX)")
-    ap.add_argument("--hold", default="NVDA", help="重复暴露检查标的(默认 NVDA;空串关闭)")
+    ap.add_argument("--hold", default=None,
+                    help="重复暴露检查标的(仅 SOXX 缺省为 NVDA;其他 ETF 缺省关闭;空串显式关闭)")
     ap.add_argument("--invest", type=float, default=100_000, help="投入金额,用于重复暴露估算")
     ap.add_argument("--start", help="价格窗口起(YYYY-MM-DD,默认近90天)")
     ap.add_argument("--end", help="价格窗口止(YYYY-MM-DD,默认今天)")
@@ -36,9 +37,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--fixtures", action="store_true", help="离线:用内置 SOXX 快照(0 credit)")
     args = ap.parse_args(argv)
 
-    dup = args.hold or None
+    # 重复暴露标的:仅 SOXX 缺省为 NVDA(对标文章);其他 ETF 缺省关闭,避免误导。
+    if args.hold is None:
+        dup = "NVDA" if args.etf.upper() == "SOXX" else None
+    else:
+        dup = args.hold or None
 
     if args.fixtures:
+        # 离线 fixture 仅覆盖 SOXX 已审计快照,拒绝用它冒充其他 ETF。
+        if args.etf.upper() != "SOXX":
+            print(f"[错误] --fixtures 仅支持 SOXX 已审计快照;{args.etf} 请去掉 --fixtures 走实时。",
+                  file=sys.stderr)
+            return 2
         from .scan.scan import build_scan_from_fixtures
         scan = build_scan_from_fixtures(dup_ticker=dup, invest_amount=args.invest)
     else:

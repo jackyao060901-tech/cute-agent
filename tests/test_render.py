@@ -34,10 +34,18 @@ def test_no_unresolved_leak():
     assert "None" not in md, "渲染结果含 None,存在缺值未处理"
 
 
+def test_resolution_disclosed():
+    # 数据质量说明必须显式披露解析情况(含 UNRESOLVED 计数),不依赖颜色
+    md = _md()
+    assert "UNRESOLVED" in md and "已解析" in md
+    assert "30 只股票已解析" in md and "0 只未解析" in md
+
+
 if __name__ == "__main__":
     md = _md()
     ok = True
-    for fn in [test_eight_modules_present, test_key_facts_present, test_no_unresolved_leak]:
+    for fn in [test_eight_modules_present, test_key_facts_present, test_no_unresolved_leak,
+               test_resolution_disclosed]:
         try:
             fn(); print(f"  ✓ {fn.__name__}")
         except AssertionError as e:

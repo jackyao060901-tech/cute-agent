@@ -43,6 +43,8 @@ class ScanResult:
     holdings_count_total: int          # 接口返回的持仓行数
     equity_count: int
     cash_count: int
+    unresolved_count: int              # 未解析成分股数(必须显式披露,不可静默丢弃)
+    unresolved_names: list[str]        # 未解析成分股名称
     # —— 各层结果 ——
     concentration: ConcentrationTiers
     matrix: list[MatrixRow]
@@ -98,6 +100,8 @@ def build_scan(
         holdings_count_total=len(holdings_data.get("holdings", [])),
         equity_count=len(res.equities),
         cash_count=len(res.cash),
+        unresolved_count=len(res.unresolved),
+        unresolved_names=[h.name for h in res.unresolved],
         concentration=conc,
         matrix=matrix,
         duplicate=dup,

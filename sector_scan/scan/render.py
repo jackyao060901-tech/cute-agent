@@ -132,7 +132,10 @@ def render_dashboard(s: ScanResult, interp=None) -> str:
              f"ranking_period={s.thirteen_f_period}。")
     L.append("- 「合计 13F 市值」为申报时点 as-reported 全量市值;与第三方公布值可能有约 0.9–6.7% 差异"
              "(**假设**:或因估值基准不同,如更晚的市价重估)。我方不为对齐而改写接口值。")
-    L.append("- 成分股 ticker 由人工核对映射表解析(已通过外部模型复核),解析不上者标红、绝不臆测。")
+    L.append(f"- 成分股 ticker 由人工核对映射表解析(已通过外部模型复核):"
+             f"{s.equity_count} 只股票已解析、{s.cash_count} 行现金、**{s.unresolved_count} 只未解析 (UNRESOLVED)**;绝不臆测。")
+    if s.unresolved_count:
+        L.append(f"  ⚠️ 未解析成分股(未纳入集中度/13F,请人工补映射):{', '.join(s.unresolved_names) or '(空名称)'}")
     L.append("")
 
     # ⑧ 风险披露

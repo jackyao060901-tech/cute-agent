@@ -26,18 +26,22 @@ python -m sector_scan <ETF> --hold <已持有TICKER> --invest <金额>
 ```
 
 常用参数:
+- `--hold <TICKER>` 重复暴露检查标的。**仅当用户明确说"我已持有 X"时才传 `--hold X`**;
+  否则不要假设持仓——非 SOXX 缺省即关闭,如需显式关闭可传 `--hold ""`。
 - `--start YYYY-MM-DD --end YYYY-MM-DD` 价格窗口(默认近 90 天)
 - `--year YYYY --quarter 1-4` 指定 13F 季度(默认最新季)
 - `--top N`(默认 10) `--core N`(默认 5)
 - `--no-brain` 只出确定性事实,不调 DeepSeek 解读
-- `--fixtures` 离线用内置 SOXX 快照(0 credit,演示/自测)
+- `--fixtures` 离线内置快照(0 credit)。**仅支持 SOXX**;对其他 ETF 加 `--fixtures` 会报错,
+  绝不用 SOXX 快照冒充其他 ETF。
 
 把 CLI 的 markdown 输出**原样呈现**给用户;不要改写其中任何数字。
 
 ## 数据契约与护栏 (Evidence Contract)
 
 - **数字零模型经手**:集中度、收益、重复暴露全部确定性计算;模型不得自行计算或篡改。
-- **标的解析**:持仓 `holding_name/cusip/isin → ticker` 走人工核对映射表;解析不上的显式标红,**绝不臆测**。
+- **标的解析**:持仓 `holding_name/cusip/isin → ticker` 走人工核对映射表;解析不上者**必须以 `UNRESOLVED` 文本标记**、
+  并在数据质量说明中列出未解析数量与名称(不依赖颜色传达),**绝不臆测、不静默丢弃**。
 - **口径透明**:必须呈现 CLI 输出里的 `as_of` / `source` / `stale` / 13F 口径 / aggregate 口径说明。
 - **现金单列**:现金/货基不并入股票集中度(总权重可能 >100%)。
 - **解读隔离**:🧠 标注块为 DeepSeek 定性解读(不含阿拉伯数字、不参与计算),与事实表分区。
