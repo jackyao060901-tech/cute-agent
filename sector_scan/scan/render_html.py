@@ -145,6 +145,8 @@ def render_html(s: ScanResult, interp=None) -> str:
     # ⑦ 数据质量
     P.append("<h2>⑦ 数据质量说明</h2><ul class='note'>")
     P.append(f"<li>持仓为 SEC N-PORT 监管快照(as-of {_e(s.holdings_as_of)},coverage={_e(s.coverage_status)}),非实时日度持仓。</li>")
+    if s.price_source:
+        P.append(f"<li>价格来源:<b>{_e(s.price_source)}</b>(免费源);{_e(s.price_cross_check)}</li>")
     P.append(f"<li>权重合计 {c.total_pct:.2f}%(含现金 {c.cash_pct:.2f}%),现金单列未混入股票集中度。</li>")
     P.append(f"<li>13F「持有者数」为 SEC Form 13F Top1000 机构内口径,ranking_period={_e(s.thirteen_f_period)}。</li>")
     P.append("<li>「合计 13F 市值」为申报时点 as-reported 市值,跨源比较可能有数个百分点差异。</li>")

@@ -14,7 +14,7 @@
 | ETF 概要 | `etf_lookup` | fund_name, aum, holdings_count | 监管快照,`as_of_date` |
 | ETF 持仓 | `etf_holdings` | holding_name, isin/cusip, weight | SEC **N-PORT** 监管快照(非实时) |
 | 机构持有 | `sec_13f_list_ticker_holders` | total_holders_in_scope, aggregate_value_usd, holders[] | SEC **Form 13F**,季度末、延迟披露 |
-| 价格 | `equity_historical_prices` | adjusted_close, close, time | 日线 OHLCV |
+| 价格 | **免费源**:Yahoo(主,复权价)+ Nasdaq(备)| adjusted_close/close/time | 回退+交叉校验,见 §6 |
 
 **时效声明**:N-PORT 与 13F 均为**监管披露、有滞后**,不等于实时日度持仓;报告始终呈现 `as_of_date` / `ranking_period` / `coverage_status`。
 
@@ -58,6 +58,9 @@ etf_lookup + etf_holdings → 标的解析 → 确定性计算 → 8模块事实
 
 - 区间收益 = `(end_adjusted_close / start_adjusted_close − 1) × 100`。
 - 用 `adjusted_close`(含分红/拆股);价格按 `time` 升序取窗口首末交易日。
+- **价格源(免费)**:Yahoo 主(有复权价)+ Nasdaq 备。**回退**:主源失败自动切备源。
+  **交叉校验**:两源都返回时比末日收盘,吻合/背离如实记入数据质量说明;记录本次所用来源(可复现)。
+  注:不同源复权口径可能有零点几个百分点差异,均为各自"as-adjusted",非错误。
 - 报告明示实际窗口与交易日数;"90 天"为名义窗口(约 3 个月),非精确 90 自然日。
 
 ## 7. 重复暴露 (Duplicate Exposure)

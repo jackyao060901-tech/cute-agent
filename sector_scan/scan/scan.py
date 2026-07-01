@@ -51,6 +51,8 @@ class ScanResult:
     duplicate: DuplicateExposure | None
     price: PriceWindow
     thirteen_f_period: str | None
+    price_source: str | None = None        # 价格来源(yahoo/nasdaq/llmquant)
+    price_cross_check: str | None = None    # 双源交叉校验说明
     # —— 参数 ——
     top_n: int = 10
     core_n: int = 5
@@ -69,6 +71,8 @@ def build_scan(
     core_n: int = 5,
     top_n: int = 10,
     extra_map: dict | None = None,
+    price_source: str | None = None,
+    price_cross_check: str | None = None,
 ) -> ScanResult:
     res: ResolveResult = resolve_holdings(holdings_data.get("holdings", []), extra_map)
     conc = concentration(res, core_n=core_n, top_n=top_n)
@@ -108,6 +112,8 @@ def build_scan(
         duplicate=dup,
         price=price,
         thirteen_f_period=period,
+        price_source=price_source,
+        price_cross_check=price_cross_check,
         top_n=top_n, core_n=core_n,
         dup_ticker=dup_ticker, invest_amount=invest_amount,
     )
@@ -139,6 +145,7 @@ def build_scan_live(
     core_n: int = 5,
     top_n: int = 10,
     use_openfigi: bool = True,
+    use_free_prices: bool = True,
     on_progress=None,
 ) -> ScanResult:
     """接真实 LLMQuant Data 接口组装(消耗 credits:holdings 1 + 13F×top_n)。
@@ -183,9 +190,22 @@ def build_scan_live(
         log(f"sec_13f_list_ticker_holders({t}) ...")
         tf_raw[t] = llmquant.sec_13f_list_ticker_holders(t, year=year, quarter=quarter)
 
-    log(f"equity_historical_prices({etf}, {start_date}~{end_date}) ...")
-    prices = llmquant.equity_historical_prices(etf, start_date=start_date, end_date=end_date)
+    # 价格:优先免费源(Yahoo 主 + Nasdaq 备,回退+交叉校验),失败再退回 LLMQuant
+    price_source, price_cross = None, None
+    prices = None
+    if use_free_prices:
+        try:
+            from ..data.prices_free import fetch_prices
+            fp = fetch_prices(etf, start_date, end_date, on_progress=log)
+            prices, price_source, price_cross = fp, fp["source"], fp["cross_check"]
+        except Exception as e:  # noqa: BLE001
+            log(f"免费价格源失败,回退 LLMQuant:{e}")
+    if prices is None:
+        log(f"equity_historical_prices({etf}, {start_date}~{end_date}) ...")
+        prices = llmquant.equity_historical_prices(etf, start_date=start_date, end_date=end_date)
+        price_source, price_cross = "llmquant", "仅 LLMQuant(免费源不可用)"
 
     return build_scan(holdings, lookup, tf_raw, prices,
                       dup_ticker=dup_ticker, invest_amount=invest_amount,
-                      core_n=core_n, top_n=top_n, extra_map=extra_map)
+                      core_n=core_n, top_n=top_n, extra_map=extra_map,
+                      price_source=price_source, price_cross_check=price_cross)

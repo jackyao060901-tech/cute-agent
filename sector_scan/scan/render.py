@@ -143,6 +143,8 @@ def render_dashboard(s: ScanResult, interp=None) -> str:
     L.append("## ⑦ 数据质量说明 (Data Quality Notes)")
     L.append(f"- 持仓为 SEC N-PORT 监管快照(as-of {s.holdings_as_of},coverage={s.coverage_status}),"
              f"**非实时日度持仓**。")
+    if s.price_source:
+        L.append(f"- 价格来源:**{s.price_source}**(免费源);{s.price_cross_check or ''}")
     L.append(f"- 权重合计 {c.total_pct:.2f}%(含现金/货基 {c.cash_pct:.2f}%),现金已单列,未混入股票集中度。")
     L.append(f"- 13F「持有者数」口径:SEC Form 13F **Top 1000 机构内**的持有者数量(非全市场),"
              f"ranking_period={s.thirteen_f_period}。")
