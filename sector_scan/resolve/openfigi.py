@@ -20,10 +20,25 @@ from pathlib import Path
 FIGI_URL = "https://api.openfigi.com/v3/mapping"
 _CACHE = Path(__file__).resolve().parent.parent / "data" / "figi_cache.json"
 _FUND_HINTS = ("fund", "money market", "unit investment trust")
+# 货币后缀(外资/跨市场报价线,非美股主 ticker),出现即判非法
+_CCY_SUFFIX = ("GBP", "GBX", "EUR", "USD", "CAD", "RUB", "JPY", "CHF", "AUD", "HKD", "SEK", "CNY")
 
 
 class OpenFigiError(RuntimeError):
     pass
+
+
+def _bad_ticker(tk: str | None) -> bool:
+    """拒绝明显不适合查美股 13F 的 ticker:带货币后缀、过长、含数字。"""
+    if not tk:
+        return True
+    if any(tk.endswith(s) for s in _CCY_SUFFIX):
+        return True
+    if len(tk) > 6:
+        return True
+    if any(c.isdigit() for c in tk):
+        return True
+    return False
 
 
 def _classify(item: dict) -> str | None:
@@ -36,10 +51,10 @@ def _classify(item: dict) -> str | None:
 
 
 def _pick(data: list[dict]) -> dict | None:
-    us = [d for d in data if d.get("exchCode") == "US" and d.get("ticker")]
-    for pool in (us, [d for d in data if d.get("ticker")]):
-        if pool:
-            return pool[0]
+    """只取 exchCode=US(美国综合)且 ticker 合法的条目;否则视为无匹配。"""
+    for d in data:
+        if d.get("exchCode") == "US" and not _bad_ticker(d.get("ticker")):
+            return d
     return None
 
 
@@ -98,7 +113,8 @@ def resolve_identifiers(
         chunk = todo[i:i + batch]
         if on_progress:
             on_progress(f"OpenFIGI 解析 {i + 1}-{i + len(chunk)}/{len(todo)} ...")
-        results = _post([{"idType": t, "idValue": v} for t, v in chunk], api_key)
+        # exchCode=US:只要美国综合上市线,避免外资/货币报价线污染
+        results = _post([{"idType": t, "idValue": v, "exchCode": "US"} for t, v in chunk], api_key)
         for (idtype, idval), r in zip(chunk, results):
             data = r.get("data") or []
             item = _pick(data)

@@ -12,6 +12,10 @@ from enum import Enum
 from typing import Any
 
 from .soxx_map import CASH_NAME_HINTS, SOXX_ISIN_MAP
+from .overrides import OVERRIDE_ISIN_MAP
+
+# 人工核对映射合集(SOXX 专表 + 外资/ADR override),优先级高于 OpenFIGI
+CURATED_ISIN_MAP = {**SOXX_ISIN_MAP, **OVERRIDE_ISIN_MAP}
 
 
 class Kind(str, Enum):
@@ -73,8 +77,8 @@ def resolve_one(raw: dict[str, Any], extra_map: dict | None = None) -> ResolvedH
     # 占位 / 空行:无任何标识符,且名称为空或为占位符(N/A 等)
     if not isin and not cusip and _is_placeholder(name):
         kind, ticker = Kind.EXCLUDED, None
-    elif isin and isin in SOXX_ISIN_MAP:                 # 1) 人工核对映射表(最可信)
-        ticker, kind_str = SOXX_ISIN_MAP[isin]
+    elif isin and isin in CURATED_ISIN_MAP:              # 1) 人工核对映射表(SOXX+override,最可信)
+        ticker, kind_str = CURATED_ISIN_MAP[isin]
         kind = Kind.CASH if kind_str == "cash" else Kind.EQUITY
     elif extra:                                          # 2) 外部映射(OpenFIGI)
         ticker, kind_str = extra

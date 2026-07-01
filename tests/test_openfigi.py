@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sector_scan.resolve.openfigi import _classify, _pick  # noqa: E402
+from sector_scan.resolve.openfigi import _bad_ticker, _classify, _pick  # noqa: E402
 from sector_scan.resolve.resolver import Kind, resolve_holdings  # noqa: E402
 
 
@@ -17,13 +17,26 @@ def test_classify_equity_vs_cash():
     assert _classify({"securityType": "Money Market Fund"}) == "cash"
 
 
-def test_pick_prefers_us_composite():
-    data = [
-        {"ticker": "NVDA", "exchCode": "UN"},
-        {"ticker": "NVDA", "exchCode": "US"},   # 美国综合,应优先
-    ]
-    assert _pick(data)["exchCode"] == "US"
-    assert _pick([])  is None
+def test_pick_only_us_and_clean():
+    # 只取 exchCode=US 且合法 ticker;非 US 或垃圾一律不取
+    assert _pick([{"ticker": "NVDA", "exchCode": "US"}])["ticker"] == "NVDA"
+    assert _pick([{"ticker": "HONGBP", "exchCode": "X1"}]) is None   # 非US + 货币后缀
+    assert _pick([{"ticker": "HONGBP", "exchCode": "US"}]) is None   # 即便标US,货币后缀也拒
+    assert _pick([]) is None
+
+
+def test_bad_ticker_guard():
+    for bad in ["HONGBP", "TRI4EUR", "AZNN0", "TOOLONGX", "AB1"]:
+        assert _bad_ticker(bad), bad
+    for good in ["HON", "TRI", "AZN", "NVDA", "GOOGL", "BRKB"]:
+        assert not _bad_ticker(good), good
+
+
+def test_override_map_applied():
+    # 外资/ADR override(Honeywell ISIN)应解析为 HON
+    holdings = [{"holding_name": "Honeywell International Inc.", "isin": "US4385161066", "weight": 1.0}]
+    res = resolve_holdings(holdings)
+    assert res.equities and res.equities[0].ticker == "HON"
 
 
 def test_extra_map_resolves_non_soxx():
@@ -49,8 +62,9 @@ def test_soxx_map_takes_priority_over_extra():
 
 if __name__ == "__main__":
     ok = True
-    for fn in [test_classify_equity_vs_cash, test_pick_prefers_us_composite,
-               test_extra_map_resolves_non_soxx, test_soxx_map_takes_priority_over_extra]:
+    for fn in [test_classify_equity_vs_cash, test_pick_only_us_and_clean, test_bad_ticker_guard,
+               test_override_map_applied, test_extra_map_resolves_non_soxx,
+               test_soxx_map_takes_priority_over_extra]:
         try:
             fn(); print(f"  ✓ {fn.__name__}")
         except AssertionError as e:
