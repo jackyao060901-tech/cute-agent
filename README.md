@@ -19,10 +19,10 @@
 
 需要 **Python 3.10+**(敲 `python3 --version` 能看到版本即可),**无需安装任何第三方库**。
 
+把收到的代码文件夹放到本地,进入该目录:
 ```bash
-# 下载代码(务必带 -b 切到开发分支,否则拿到的是空的 main)
-git clone -b claude/kai-gong-kai-gong-kai-gong-3n5cvv https://github.com/jackyao060901-tech/cute-agent.git
-cd cute-agent
+# 如果收到的是压缩包,先解压;然后进入代码目录(目录里应能看到 sector_scan/ 文件夹)
+cd 代码所在目录
 ```
 
 先验证能跑(离线、不花钱、不用钥匙):
