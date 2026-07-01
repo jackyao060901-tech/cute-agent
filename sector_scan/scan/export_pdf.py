@@ -6,13 +6,32 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
+import zlib
 
 
 class PdfExportError(RuntimeError):
     pass
+
+
+def pdf_digit_runs(pdf_path: str) -> set[str]:
+    """从 PDF 内容流(FlateDecode)提取可读的数字游程集合(stdlib,尽力而为)。
+
+    用途:审计 PDF 文本层是否含关键数值。数字游程对字距(kerning)拆分稳健;
+    字母/中文因字形子集编码不适用于此法,故本校验只覆盖数字类指标。
+    """
+    raw = open(pdf_path, "rb").read()
+    text = b""
+    for m in re.finditer(rb"stream\r?\n(.*?)\r?\nendstream", raw, re.S):
+        try:
+            text += zlib.decompress(m.group(1))
+        except Exception:
+            pass
+    ascii_digits = bytes(b if 48 <= b <= 57 else 32 for b in text).decode("latin1")
+    return set(re.findall(r"\d+", ascii_digits))
 
 
 def find_chromium() -> str | None:
