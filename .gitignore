@@ -14,3 +14,6 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# 生成的样张 PDF(可 --pdf 重生成)
+docs/samples/*.pdf

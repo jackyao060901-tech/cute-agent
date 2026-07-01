@@ -36,6 +36,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--core", type=int, default=5, help="核心 N 只(默认5)")
     ap.add_argument("--no-brain", action="store_true", help="不调用 DeepSeek 解读层")
     ap.add_argument("--fixtures", action="store_true", help="离线:用内置 SOXX 快照(0 credit)")
+    ap.add_argument("--html", action="store_true", help="输出 HTML(而非 markdown)")
+    ap.add_argument("--out", help="写入文件而非标准输出")
+    ap.add_argument("--pdf", help="导出 PDF 到指定路径(需本机 Chromium)")
     args = ap.parse_args(argv)
 
     # 重复暴露标的:--no-hold 显式关闭;否则仅 SOXX 缺省 NVDA(对标文章),其他 ETF 缺省关闭。
@@ -81,7 +84,29 @@ def main(argv: list[str] | None = None) -> int:
         except Exception as e:  # noqa: BLE001
             print(f"  · 解读跳过:{e}", file=sys.stderr)
 
-    print(render_dashboard(scan, interp))
+    if args.pdf:
+        from .scan.render_html import render_html
+        from .scan.export_pdf import html_to_pdf, PdfExportError
+        try:
+            html_to_pdf(render_html(scan, interp), args.pdf)
+            print(f"已导出 PDF:{args.pdf}", file=sys.stderr)
+        except PdfExportError as e:
+            print(f"[错误] PDF 导出失败:{e}", file=sys.stderr)
+            return 2
+        return 0
+
+    if args.html:
+        from .scan.render_html import render_html
+        output = render_html(scan, interp)
+    else:
+        output = render_dashboard(scan, interp)
+
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(output)
+        print(f"已写入 {args.out}", file=sys.stderr)
+    else:
+        print(output)
     return 0
 
 
