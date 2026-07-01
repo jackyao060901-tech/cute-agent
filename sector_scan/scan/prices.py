@@ -39,7 +39,9 @@ def build_price_window(ticker: str, data: dict[str, Any]) -> PriceWindow:
     prices = data.get("prices") or []
     if not prices:
         raise ValueError(f"{ticker}: 价格窗口为空")
-    first, last = prices[0], prices[-1]  # 文档:prices 按时间升序
+    # 防御:文档称按时间升序,但显式按 time 排序,避免接口顺序变动导致起止价颠倒
+    prices = sorted(prices, key=lambda b: b.get("time") or "")
+    first, last = prices[0], prices[-1]
     return PriceWindow(
         ticker=ticker,
         start_date=first.get("time"),

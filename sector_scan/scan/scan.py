@@ -118,3 +118,48 @@ def build_scan_from_fixtures(
     prices = json.load(open(_FIX / "soxx_prices_2026-03-23_06-17.json"))
     return build_scan(holdings, lookup, tf, prices,
                       dup_ticker=dup_ticker, invest_amount=invest_amount)
+
+
+def build_scan_live(
+    etf: str,
+    *,
+    start_date: str,
+    end_date: str,
+    year: int | None = None,
+    quarter: int | None = None,
+    dup_ticker: str | None = "NVDA",
+    invest_amount: float | None = 100_000,
+    core_n: int = 5,
+    top_n: int = 10,
+    on_progress=None,
+) -> ScanResult:
+    """接真实 LLMQuant Data 接口组装(消耗 credits:holdings 1 + 13F×top_n)。
+
+    on_progress:可选回调(str)用于打印进度。标的解析仍走人工核对映射表;
+    未覆盖的 ETF 会产生 UNRESOLVED(显式标红,不臆测)。
+    """
+    from ..data import llmquant
+
+    def log(m):
+        if on_progress:
+            on_progress(m)
+
+    log(f"etf_lookup({etf}) ...")
+    lookup = llmquant.etf_lookup(etf)
+    log(f"etf_holdings({etf}) ...")
+    holdings = llmquant.etf_holdings(etf, limit=50)
+
+    res = resolve_holdings(holdings.get("holdings", []))
+    top_tickers = res.top_n_tickers(top_n)
+
+    tf_raw: dict[str, Any] = {}
+    for t in top_tickers:
+        log(f"sec_13f_list_ticker_holders({t}) ...")
+        tf_raw[t] = llmquant.sec_13f_list_ticker_holders(t, year=year, quarter=quarter)
+
+    log(f"equity_historical_prices({etf}, {start_date}~{end_date}) ...")
+    prices = llmquant.equity_historical_prices(etf, start_date=start_date, end_date=end_date)
+
+    return build_scan(holdings, lookup, tf_raw, prices,
+                      dup_ticker=dup_ticker, invest_amount=invest_amount,
+                      core_n=core_n, top_n=top_n)

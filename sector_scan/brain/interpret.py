@@ -87,7 +87,7 @@ def interpret(s: ScanResult, *, model: str = "deepseek-v4-pro", max_retries: int
             interp = Interpretation(
                 one_line=data.get("one_line", "").strip(),
                 crowding_note=data.get("crowding_note", "").strip(),
-                quick_reads={k: str(v).strip() for k, v in (data.get("quick_reads") or {}).items()},
+                quick_reads={str(k).upper(): str(v).strip() for k, v in (data.get("quick_reads") or {}).items()},
             )
         except (DeepSeekError, json.JSONDecodeError, AttributeError):
             continue
