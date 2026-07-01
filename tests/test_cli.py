@@ -40,10 +40,23 @@ def test_soxx_default_checks_nvda_duplicate():
     assert "NVDA" in out and "$8,263" in out
 
 
+def test_lowercase_soxx_fixtures_accepted():
+    """小写 soxx --fixtures 应被接受(大小写无关)。"""
+    rc, out = _run(["soxx", "--fixtures", "--no-brain"])
+    assert rc == 0 and "iShares Semiconductor ETF" in out
+
+
+def test_no_hold_disables_duplicate():
+    """--no-hold 应关闭重复暴露检查。"""
+    rc, out = _run(["--fixtures", "--no-brain", "--no-hold"])
+    assert rc == 0 and "$8,263" not in out
+
+
 if __name__ == "__main__":
     ok = True
     for fn in [test_cli_fixtures_offline, test_fixtures_rejects_non_soxx,
-               test_soxx_default_checks_nvda_duplicate]:
+               test_soxx_default_checks_nvda_duplicate,
+               test_lowercase_soxx_fixtures_accepted, test_no_hold_disables_duplicate]:
         try:
             fn(); print(f"  ✓ {fn.__name__}")
         except AssertionError as e:

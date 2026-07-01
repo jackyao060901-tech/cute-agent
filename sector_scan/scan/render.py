@@ -135,7 +135,8 @@ def render_dashboard(s: ScanResult, interp=None) -> str:
     L.append(f"- 成分股 ticker 由人工核对映射表解析(已通过外部模型复核):"
              f"{s.equity_count} 只股票已解析、{s.cash_count} 行现金、**{s.unresolved_count} 只未解析 (UNRESOLVED)**;绝不臆测。")
     if s.unresolved_count:
-        L.append(f"  ⚠️ 未解析成分股(未纳入集中度/13F,请人工补映射):{', '.join(s.unresolved_names) or '(空名称)'}")
+        L.append(f"- ⚠️ **重要:{s.unresolved_count} 只成分股未解析,本页集中度与成分股矩阵仅覆盖已解析持仓,"
+                 f"未解析部分未纳入统计**。未解析清单:{', '.join(s.unresolved_names) or '(空名称)'}。请人工补映射后重跑。")
     L.append("")
 
     # ⑧ 风险披露

@@ -26,6 +26,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("etf", nargs="?", default="SOXX", help="行业 ETF 代码(默认 SOXX)")
     ap.add_argument("--hold", default=None,
                     help="重复暴露检查标的(仅 SOXX 缺省为 NVDA;其他 ETF 缺省关闭;空串显式关闭)")
+    ap.add_argument("--no-hold", action="store_true", help="显式关闭重复暴露检查(等价 --hold \"\")")
     ap.add_argument("--invest", type=float, default=100_000, help="投入金额,用于重复暴露估算")
     ap.add_argument("--start", help="价格窗口起(YYYY-MM-DD,默认近90天)")
     ap.add_argument("--end", help="价格窗口止(YYYY-MM-DD,默认今天)")
@@ -37,8 +38,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--fixtures", action="store_true", help="离线:用内置 SOXX 快照(0 credit)")
     args = ap.parse_args(argv)
 
-    # 重复暴露标的:仅 SOXX 缺省为 NVDA(对标文章);其他 ETF 缺省关闭,避免误导。
-    if args.hold is None:
+    # 重复暴露标的:--no-hold 显式关闭;否则仅 SOXX 缺省 NVDA(对标文章),其他 ETF 缺省关闭。
+    if args.no_hold:
+        dup = None
+    elif args.hold is None:
         dup = "NVDA" if args.etf.upper() == "SOXX" else None
     else:
         dup = args.hold or None
