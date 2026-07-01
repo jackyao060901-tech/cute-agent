@@ -40,13 +40,14 @@
 ---
 
 ## 进度台阶 (Roadmap — 每阶独立可验证)
-1. **持仓 + 标的解析**:拉真实 SOXX 全持仓,`holding_name/cusip/isin → ticker` 全部解析正确(进行中)
-2. 13F 层:逐成分股 holder count / aggregate / top holders
-3. 价格层:90 天窗口,确定性算收益
-4. 计算层:集中度分层、重复暴露真计算(单元测试)
-5. 渲染层:8 模块中文 dashboard(只放事实)
-6. DeepSeek 大脑:文字解读 + 防幻觉护栏
-7. 打包:CLI 工具 → 封装成 Claude Code skill
-8. 质量/合规:方法论文档、免责、HTML/PDF、对标文章
+1. ✅ **持仓 + 标的解析**:SOXX 全持仓,`holding_name/cusip/isin → ticker` 全解析(外部复核通过)
+2. ✅ 13F 层:逐成分股 holder count / aggregate / top holders(holder count 全等文章)
+3. ✅ 价格层:90 天窗口,确定性算收益(+78.18% 对账文章)
+4. ✅ 计算层:集中度分层、重复暴露真计算(单元测试)
+5. ✅ 渲染层:8 模块中文 dashboard(只放事实)
+6. ✅ DeepSeek 大脑:文字解读 + 数字/违禁词双护栏(四轮审计)
+7. ✅ 打包:CLI(python -m sector_scan)+ Claude Code skill(/sector-scan)
+8. ✅ 质量/合规:方法论 / 免责 / 对标 / HTML·PDF 导出
 
-> 详细调研见 `docs/research/00-preparation-dossier.md`。
+> v1(SOXX)交付级完成。后续:接 OpenFIGI 泛化到任意 ETF;更多量化 skill。
+> 详细调研见 `docs/research/00-preparation-dossier.md`;方法论见 `docs/methodology.md`。
