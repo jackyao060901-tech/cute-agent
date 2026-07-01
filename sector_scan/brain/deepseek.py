@@ -22,7 +22,7 @@ def chat(
     messages: list[dict[str, str]],
     model: str = DEFAULT_MODEL,
     temperature: float = 0.0,
-    timeout: int = 60,
+    timeout: int = 90,
     response_json: bool = False,
 ) -> str:
     body = {"model": model, "messages": messages, "temperature": temperature}

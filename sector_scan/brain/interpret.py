@@ -74,32 +74,48 @@ def _facts_text(s: ScanResult) -> str:
     return "\n".join(lines)
 
 
-def interpret(s: ScanResult, *, model: str = "deepseek-v4-pro", max_retries: int = 2) -> Interpretation | None:
-    """调用大脑生成解读;失败或违规则返回 None(降级,事实层不受影响)。"""
+def interpret(
+    s: ScanResult, *, model: str = "deepseek-v4-pro", max_retries: int = 3
+) -> "tuple[Interpretation | None, str]":
+    """调用大脑生成解读。返回 (解读或None, 原因)。
+
+    失败/违规则返回 (None, 具体原因),CLI 据此告知用户是"网络超时"还是"护栏拦截",
+    便于诊断;事实层不受影响。
+    首次 temperature=0(可复现);重试时升温,让模型换措辞绕开违禁词,提高成功率。
+    """
     user = _facts_text(s)
+    reason = "未知"
     for attempt in range(max_retries + 1):
+        temp = 0.0 if attempt == 0 else min(0.3 + 0.3 * attempt, 1.0)
         try:
             raw = chat(
                 [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}],
-                model=model, temperature=0.0, response_json=True,
+                model=model, temperature=temp, response_json=True,
             )
+        except DeepSeekError as e:
+            reason = f"DeepSeek 连接/接口失败:{e}"
+            continue
+        try:
             data = json.loads(raw)
             interp = Interpretation(
                 one_line=data.get("one_line", "").strip(),
                 crowding_note=data.get("crowding_note", "").strip(),
                 quick_reads={str(k).upper(): str(v).strip() for k, v in (data.get("quick_reads") or {}).items()},
             )
-        except (DeepSeekError, json.JSONDecodeError, AttributeError):
+        except (json.JSONDecodeError, AttributeError, TypeError):
+            reason = "DeepSeek 返回非预期 JSON"
             continue
         digit_bad = interp.has_any_digit()
         banned = interp.banned_phrases_found()
         if not digit_bad and not banned:   # 双护栏:数字 + 违禁词
-            return interp
-        # 违规 -> 追加更强约束重试
+            return interp, "ok"
+        # 违规 -> 记录原因并追加更强约束重试
+        parts = (["阿拉伯数字"] if digit_bad else []) + ([f"违禁词{banned}"] if banned else [])
+        reason = "输出未过护栏(含 " + "、".join(parts) + ")"
         warn = "\n严重警告:上次输出违规,请重写。"
         if digit_bad:
             warn += "不得出现任何阿拉伯数字 0-9。"
         if banned:
             warn += f"不得使用这些词:{'、'.join(banned)};改用'主要持有人包括…',且不要对单只个股收益下判断。"
         user += warn
-    return None
+    return None, reason

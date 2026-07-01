@@ -78,9 +78,9 @@ def main(argv: list[str] | None = None) -> int:
         try:
             from .brain.interpret import interpret
             print("  · DeepSeek 解读 ...", file=sys.stderr)
-            interp = interpret(scan)
+            interp, reason = interpret(scan)
             if interp is None:
-                print("  · 解读降级(护栏未通过/失败),仅出事实版", file=sys.stderr)
+                print(f"  · 解读降级(仅出事实版)。原因:{reason}", file=sys.stderr)
         except Exception as e:  # noqa: BLE001
             print(f"  · 解读跳过:{e}", file=sys.stderr)
 
