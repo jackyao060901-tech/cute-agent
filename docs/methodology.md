@@ -33,7 +33,9 @@ etf_lookup + etf_holdings → 标的解析 → 确定性计算 → 8模块事实
 - **现金/货基**(如 BlackRock Funds III)识别为 `cash`,**单列、不并入股票集中度**。
 - **占位行**(N/A、无标识符)剔除。
 - **未解析**成分股标记 `UNRESOLVED`,在数据质量说明显式披露数量与名称,**绝不臆测、不静默丢弃**。
-- 升级路:接 OpenFIGI(ISIN/CUSIP→ticker)自动泛化到任意 ETF。
+- **解析两级(支持任意 ETF)**:① SOXX 用上述人工核对表(最可信);② 其余成分股用 **OpenFIGI**
+  (免费权威源)自动 ISIN/CUSIP→ticker,并按证券类型把货基/基金归为现金。OpenFIGI 返回真实映射、
+  非模型臆测;结果本地缓存以省调用。人工表优先级高于 OpenFIGI。
 
 ## 4. 集中度 (Concentration)
 
@@ -75,7 +77,8 @@ etf_lookup + etf_holdings → 标的解析 → 确定性计算 → 8模块事实
 
 ## 9. 已知局限 (Limitations)
 
-- v1 标的映射表覆盖 **SOXX**;其他 ETF 未覆盖成分股标 UNRESOLVED(需补映射或接 OpenFIGI)。
+- **支持任意美股 ETF**(SOXX 人工表 + OpenFIGI 自动解析);极少数纯衍生品成分股会标 UNRESOLVED。
+- 数据源仍为付费 LLMQuant(持仓/13F/价格);"换免费源(SEC EDGAR / 基金公司每日持仓)"为后续升级。
 - N-PORT / 13F 为监管快照,有披露滞后;不构成实时持仓。
 - Aggregate 13F 市值为申报时点口径,跨源比较需注意估值基准差异。
 

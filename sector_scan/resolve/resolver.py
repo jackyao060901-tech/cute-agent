@@ -51,23 +51,37 @@ def _is_placeholder(name: str | None) -> bool:
     return (name or "").strip().lower() in PLACEHOLDER_NAMES
 
 
-def resolve_one(raw: dict[str, Any]) -> ResolvedHolding:
+def _from_extra(extra_map, isin, cusip):
+    """从外部映射(如 OpenFIGI 结果)按 isin 优先、cusip 兜底取 (ticker, kind_str)。"""
+    if not extra_map:
+        return None
+    for key in (isin, cusip):
+        if key and key in extra_map and extra_map[key]:
+            return extra_map[key]
+    return None
+
+
+def resolve_one(raw: dict[str, Any], extra_map: dict | None = None) -> ResolvedHolding:
     name = raw.get("holding_name")
     isin = raw.get("isin")
     cusip = raw.get("cusip")
     weight = raw.get("weight") or 0.0
     mv = raw.get("market_value")
 
+    extra = _from_extra(extra_map, isin, cusip)
+
     # 占位 / 空行:无任何标识符,且名称为空或为占位符(N/A 等)
     if not isin and not cusip and _is_placeholder(name):
         kind, ticker = Kind.EXCLUDED, None
-    elif isin and isin in SOXX_ISIN_MAP:
+    elif isin and isin in SOXX_ISIN_MAP:                 # 1) 人工核对映射表(最可信)
         ticker, kind_str = SOXX_ISIN_MAP[isin]
         kind = Kind.CASH if kind_str == "cash" else Kind.EQUITY
-    elif _looks_like_cash(name):
+    elif extra:                                          # 2) 外部映射(OpenFIGI)
+        ticker, kind_str = extra
+        kind = Kind.CASH if kind_str == "cash" else Kind.EQUITY
+    elif _looks_like_cash(name):                         # 3) 现金名称启发
         kind, ticker = Kind.CASH, None
-    else:
-        # 映射不上 —— 标红,绝不猜测
+    else:                                                # 4) 映射不上 —— 标红,绝不猜测
         kind, ticker = Kind.UNRESOLVED, None
 
     return ResolvedHolding(
@@ -101,5 +115,5 @@ class ResolveResult:
         return [h.ticker for h in self.equities[:n] if h.ticker]
 
 
-def resolve_holdings(raw_holdings: list[dict[str, Any]]) -> ResolveResult:
-    return ResolveResult([resolve_one(h) for h in raw_holdings])
+def resolve_holdings(raw_holdings: list[dict[str, Any]], extra_map: dict | None = None) -> ResolveResult:
+    return ResolveResult([resolve_one(h, extra_map) for h in raw_holdings])

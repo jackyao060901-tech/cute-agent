@@ -17,3 +17,6 @@ venv/
 
 # 生成的样张 PDF(可 --pdf 重生成)
 docs/samples/*.pdf
+
+# OpenFIGI 本地缓存
+sector_scan/data/figi_cache.json

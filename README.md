@@ -149,6 +149,10 @@ python3 -m sector_scan SOXX --start 2026-03-23 --end 2026-06-17 --year 2025 --qu
 # 我持有 AVGO,投 2 万,只看前 3 大,导出网页
 python3 -m sector_scan SOXX --hold AVGO --invest 20000 --top 3 --html --out avgo.html
 
+# 换任意 ETF(科技 XLK / 纳指 QQQ / 半导体 SMH …均可)
+python3 -m sector_scan XLK
+python3 -m sector_scan QQQ --no-brain
+
 # 快速看事实、不花 DeepSeek、当天最新数据
 python3 -m sector_scan SOXX --no-brain
 
@@ -164,7 +168,7 @@ python3 -m sector_scan --fixtures --no-brain
 |---|---|
 | `缺少 LLMQUANT_API_KEY` | 没设钥匙。先 `export`,或加 `--fixtures --no-brain` 走离线 |
 | `Ticker XXX is not currently supported` | ETF 代码写错/不支持。程序会友好报错、退出码 2,不崩 |
-| 顶部出现"⚠️ 覆盖提示……不适用" | 该 ETF 成分股当前映射表未覆盖(v1 只精确支持 **SOXX**);概要与价格仍有效 |
+| 顶部出现"⚠️ 覆盖提示……不适用" | 极少见:该 ETF 成分股连 OpenFIGI 也全解析不了(如全是衍生品);概要与价格仍有效 |
 | `--fixtures` 报"仅支持 SOXX" | 离线快照只有 SOXX;其他 ETF 去掉 `--fixtures` 走实时 |
 | `PDF 导出失败:未找到 Chromium` | 本机没 Chromium。用 HTML → 浏览器"打印为 PDF",或设 `CHROME_BIN` |
 | `解读降级(仅出事实版)。原因:…` | AI 解读没过护栏或网络失败;**不影响数字**,报告照出,只少了 🧠 那行 |
@@ -174,7 +178,7 @@ python3 -m sector_scan --fixtures --no-brain
 
 ## 9. 重要说明
 
-- **覆盖范围**:v1 标的映射表精确覆盖 **SOXX**;换任意 ETF 是后续升级(接免费的 SEC EDGAR / iShares 每日持仓,零边际成本)。
+- **覆盖范围**:**支持任意美股 ETF**。SOXX 用人工核对映射表(最可信);其他 ETF 的成分股用 **OpenFIGI**(免费权威源)自动把 ISIN/CUSIP 解析成 ticker,解析不上的显式标 `UNRESOLVED`、绝不臆测。
 - **数据时效**:持仓来自 SEC N-PORT 监管快照(有滞后、会标 `stale`);13F 为季度末延迟披露;价格为实时。报告第 ⑦ 段会如实标注口径。
 - **免责**:本工具仅供信息与研究用途,**不构成投资建议**。详见 [`docs/disclaimer.md`](docs/disclaimer.md)。
 - 更多:方法论 [`docs/methodology.md`](docs/methodology.md) · 对标 [`docs/benchmark.md`](docs/benchmark.md) · 详细指南 [`docs/usage.md`](docs/usage.md)。

@@ -68,8 +68,9 @@ def build_scan(
     invest_amount: float | None = 100_000,
     core_n: int = 5,
     top_n: int = 10,
+    extra_map: dict | None = None,
 ) -> ScanResult:
-    res: ResolveResult = resolve_holdings(holdings_data.get("holdings", []))
+    res: ResolveResult = resolve_holdings(holdings_data.get("holdings", []), extra_map)
     conc = concentration(res, core_n=core_n, top_n=top_n)
     dup = duplicate_exposure(res, dup_ticker, invest_amount) if dup_ticker else None
     price = build_price_window(holdings_data.get("ticker", "ETF"), prices_data)
@@ -137,6 +138,7 @@ def build_scan_live(
     invest_amount: float | None = 100_000,
     core_n: int = 5,
     top_n: int = 10,
+    use_openfigi: bool = True,
     on_progress=None,
 ) -> ScanResult:
     """接真实 LLMQuant Data 接口组装(消耗 credits:holdings 1 + 13F×top_n)。
@@ -153,9 +155,27 @@ def build_scan_live(
     log(f"etf_lookup({etf}) ...")
     lookup = llmquant.etf_lookup(etf)
     log(f"etf_holdings({etf}) ...")
-    holdings = llmquant.etf_holdings(etf, limit=50)
+    holdings = llmquant.etf_holdings(etf, limit=500)
 
+    # 标的解析:先用人工映射表;未解析的用 OpenFIGI 自动补(支持任意 ETF)
+    extra_map: dict = {}
     res = resolve_holdings(holdings.get("holdings", []))
+    if use_openfigi and res.unresolved:
+        ids = []
+        for h in res.unresolved:
+            if h.isin:
+                ids.append(("ID_ISIN", h.isin))
+            elif h.cusip:
+                ids.append(("ID_CUSIP", h.cusip))
+        if ids:
+            log(f"OpenFIGI 自动解析 {len(ids)} 只未覆盖成分股 ...")
+            try:
+                from ..resolve.openfigi import resolve_identifiers
+                extra_map = resolve_identifiers(ids, on_progress=log)
+                res = resolve_holdings(holdings.get("holdings", []), extra_map)
+            except Exception as e:  # noqa: BLE001 — 解析失败则退回"标红未解析",不崩
+                log(f"OpenFIGI 解析失败(未解析项将标 UNRESOLVED):{e}")
+
     top_tickers = res.top_n_tickers(top_n)
 
     tf_raw: dict[str, Any] = {}
@@ -168,4 +188,4 @@ def build_scan_live(
 
     return build_scan(holdings, lookup, tf_raw, prices,
                       dup_ticker=dup_ticker, invest_amount=invest_amount,
-                      core_n=core_n, top_n=top_n)
+                      core_n=core_n, top_n=top_n, extra_map=extra_map)

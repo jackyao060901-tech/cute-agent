@@ -54,8 +54,9 @@ python -m sector_scan <ETF> --hold <已持有TICKER> --invest <金额>
 
 ## 覆盖范围 (Coverage)
 
-v1 的标的映射表覆盖 **SOXX**(30 只成分股 + 现金识别,已通过外部复核)。
-其他 ETF 会对未覆盖成分股标记 UNRESOLVED(不臆测);泛化到任意 ETF 的
-OpenFIGI(ISIN/CUSIP→ticker)自动解析为后续升级项。
+**支持任意美股 ETF**。标的解析两级:
+1. **SOXX** 用人工核对映射表(30 只 + 现金识别,已通过外部复核,最可信);
+2. 其他 ETF 的成分股用 **OpenFIGI**(免费权威源)自动 ISIN/CUSIP→ticker,并按证券类型
+   把货基/基金归为现金;解析不上者(如纯衍生品)标 `UNRESOLVED`,绝不臆测。
 
 详细方法论见 [`workflows/sector-smart-money-scan.md`](workflows/sector-smart-money-scan.md)。
