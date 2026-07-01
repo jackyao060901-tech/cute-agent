@@ -32,11 +32,47 @@ def test_bad_ticker_guard():
         assert not _bad_ticker(good), good
 
 
-def test_override_map_applied():
-    # 外资/ADR override(Honeywell ISIN)应解析为 HON
+def test_known_overrides():
+    # 三个复核确认的外资/ADR override
+    from sector_scan.resolve.overrides import OVERRIDE_ISIN_MAP
+    assert OVERRIDE_ISIN_MAP["US4385161066"] == ("HON", "equity")
+    assert OVERRIDE_ISIN_MAP["CA8849038085"] == ("TRI", "equity")
+    assert OVERRIDE_ISIN_MAP["US0463531089"] == ("AZN", "equity")
     holdings = [{"holding_name": "Honeywell International Inc.", "isin": "US4385161066", "weight": 1.0}]
+    assert resolve_holdings(holdings).equities[0].ticker == "HON"
+
+
+def test_curated_maps_have_no_bad_tickers():
+    from sector_scan.resolve.resolver import CURATED_ISIN_MAP
+    bad = [tk for tk, kind in CURATED_ISIN_MAP.values() if kind == "equity" and _bad_ticker(tk)]
+    assert bad == [], f"人工表含非法 ticker: {bad}"
+
+
+def test_resolved_never_has_bad_ticker():
+    # 即便 extra_map(OpenFIGI)传入坏 ticker,也不得成为已解析股票
+    holdings = [{"holding_name": "Honeywell Intl", "isin": "US4385161066X", "weight": 1.0}]
+    res = resolve_holdings(holdings, {"US4385161066X": ("HONGBP", "equity")})
+    assert all(not _bad_ticker(e.ticker) for e in res.equities)
+    assert res.equities == []  # HONGBP 被拒,退为 UNRESOLVED
+
+
+def test_dual_class_distinct():
+    # GOOGL / GOOG 双类股保持区分
+    holdings = [
+        {"holding_name": "Alphabet Inc.", "isin": "US02079K3059", "weight": 0.5},
+        {"holding_name": "Alphabet Inc.", "isin": "US02079K1079", "weight": 0.5},
+    ]
+    extra = {"US02079K3059": ("GOOGL", "equity"), "US02079K1079": ("GOOG", "equity")}
+    tks = {e.ticker for e in resolve_holdings(holdings, extra).equities}
+    assert tks == {"GOOGL", "GOOG"}
+
+
+def test_no_isin_name_stays_unresolved():
+    # 无 ISIN/CUSIP 的实名持仓(如 Chicago Mercantile Exchange)不得靠名字猜,应 UNRESOLVED
+    holdings = [{"holding_name": "Chicago Mercantile Exchange", "isin": None, "cusip": None, "weight": 0.01}]
     res = resolve_holdings(holdings)
-    assert res.equities and res.equities[0].ticker == "HON"
+    assert res.unresolved and res.unresolved[0].ticker is None
+    assert res.equities == []
 
 
 def test_extra_map_resolves_non_soxx():
@@ -63,7 +99,9 @@ def test_soxx_map_takes_priority_over_extra():
 if __name__ == "__main__":
     ok = True
     for fn in [test_classify_equity_vs_cash, test_pick_only_us_and_clean, test_bad_ticker_guard,
-               test_override_map_applied, test_extra_map_resolves_non_soxx,
+               test_known_overrides, test_curated_maps_have_no_bad_tickers,
+               test_resolved_never_has_bad_ticker, test_dual_class_distinct,
+               test_no_isin_name_stays_unresolved, test_extra_map_resolves_non_soxx,
                test_soxx_map_takes_priority_over_extra]:
         try:
             fn(); print(f"  ✓ {fn.__name__}")

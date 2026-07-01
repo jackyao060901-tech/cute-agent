@@ -13,6 +13,7 @@ from typing import Any
 
 from .soxx_map import CASH_NAME_HINTS, SOXX_ISIN_MAP
 from .overrides import OVERRIDE_ISIN_MAP
+from .openfigi import _bad_ticker
 
 # 人工核对映射合集(SOXX 专表 + 外资/ADR override),优先级高于 OpenFIGI
 CURATED_ISIN_MAP = {**SOXX_ISIN_MAP, **OVERRIDE_ISIN_MAP}
@@ -80,7 +81,7 @@ def resolve_one(raw: dict[str, Any], extra_map: dict | None = None) -> ResolvedH
     elif isin and isin in CURATED_ISIN_MAP:              # 1) 人工核对映射表(SOXX+override,最可信)
         ticker, kind_str = CURATED_ISIN_MAP[isin]
         kind = Kind.CASH if kind_str == "cash" else Kind.EQUITY
-    elif extra:                                          # 2) 外部映射(OpenFIGI)
+    elif extra and not (extra[1] == "equity" and _bad_ticker(extra[0])):  # 2) 外部映射(OpenFIGI),坏 ticker 拒
         ticker, kind_str = extra
         kind = Kind.CASH if kind_str == "cash" else Kind.EQUITY
     elif _looks_like_cash(name):                         # 3) 现金名称启发
