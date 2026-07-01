@@ -56,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
                   file=sys.stderr)
             return 2
         from .scan.scan import build_scan_from_fixtures
-        scan = build_scan_from_fixtures(dup_ticker=dup, invest_amount=args.invest)
+        scan = build_scan_from_fixtures(dup_ticker=dup, invest_amount=args.invest,
+                                        core_n=args.core, top_n=args.top)
     else:
         from .scan.scan import build_scan_live
         start = args.start or _default_window()[0]

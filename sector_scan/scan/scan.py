@@ -113,7 +113,8 @@ def build_scan(
 
 
 def build_scan_from_fixtures(
-    *, dup_ticker: str | None = "NVDA", invest_amount: float | None = 100_000
+    *, dup_ticker: str | None = "NVDA", invest_amount: float | None = 100_000,
+    core_n: int = 5, top_n: int = 10,
 ) -> ScanResult:
     """用本地 fixture 组装(0 credit,可复现,供演示与测试)。"""
     holdings = json.load(open(_FIX / "soxx_holdings_2025-12-31.json"))["data"]
@@ -121,7 +122,8 @@ def build_scan_from_fixtures(
     tf = json.load(open(_FIX / "soxx_13f_2025Q4.json"))
     prices = json.load(open(_FIX / "soxx_prices_2026-03-23_06-17.json"))
     return build_scan(holdings, lookup, tf, prices,
-                      dup_ticker=dup_ticker, invest_amount=invest_amount)
+                      dup_ticker=dup_ticker, invest_amount=invest_amount,
+                      core_n=core_n, top_n=top_n)
 
 
 def build_scan_live(
